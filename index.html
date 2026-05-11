@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PANEL DUC HUY</title>
+
+<style>
+body{
+margin:0;
+background:black;
+color:#00ff9d;
+font-family:monospace;
+}
+
+.box{
+width:380px;
+margin:30px auto;
+border:1px solid #00ff9d;
+border-radius:15px;
+padding:15px;
+}
+
+h1{
+text-align:center;
+font-size:30px;
+letter-spacing:4px;
+}
+
+input,button{
+width:100%;
+padding:10px;
+margin-top:8px;
+border-radius:10px;
+border:1px solid #00ff9d;
+background:black;
+color:#00ff9d;
+}
+
+button:hover{
+background:#00ff9d;
+color:black;
+}
+
+label{
+display:block;
+margin-top:8px;
+}
+
+.hidden{display:none;}
+
+.section{
+border-top:1px solid #00ff9d;
+margin-top:10px;
+padding-top:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>DUC HUY</h1>
+
+<!-- LOGIN -->
+<div id="login">
+
+<label>KEY</label>
+<input id="key" placeholder="NHẬP KEY">
+<button onclick="pasteKey()">📋 DÁN KEY</button>
+
+<label>MÃ THIẾT BỊ</label>
+<input id="device" readonly>
+
+<button onclick="login()">ĐĂNG NHẬP</button>
+
+<p id="msg"></p>
+
+</div>
+
+<!-- MAIN -->
+<div id="main" class="hidden">
+
+<div class="section">
+
+<h3>BẢNG ĐIỀU KHIỂN</h3>
+
+<p id="time"></p>
+
+<button onclick="logout()">ĐĂNG XUẤT KEY</button>
+
+</div>
+
+<div class="section">
+
+<button>⚡ TĂNG NHẠY MÀN</button>
+<button>🎯 BÁM ĐẦU</button>
+<button>🔫 NHẸ TÂM</button>
+<button>🔒 KHOÁ ĐẦU</button>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let db = JSON.parse(localStorage.getItem("key_db") || "[]");
+
+/* DEVICE ID */
+function deviceId(){
+return btoa(navigator.userAgent + screen.width + screen.height);
+}
+
+document.getElementById("device").value = deviceId();
+
+/* PASTE KEY */
+function pasteKey(){
+navigator.clipboard.readText().then(text=>{
+document.getElementById("key").value = text;
+}).catch(()=>{
+alert("KHÔNG DÁN ĐƯỢC");
+});
+}
+
+/* LOGIN */
+function login(){
+
+let k=document.getElementById("key").value;
+let d=deviceId();
+
+let f=db.find(x=>x.key===k);
+
+if(!f){
+document.getElementById("msg").innerText="SAI KEY";
+return;
+}
+
+if(f.locked){
+document.getElementById("msg").innerText="KEY BỊ KHÓA";
+return;
+}
+
+if(Date.now()>f.exp){
+document.getElementById("msg").innerText="KEY HẾT HẠN";
+return;
+}
+
+/* bind device */
+if(!f.device){
+f.device=d;
+localStorage.setItem("key_db",JSON.stringify(db));
+}
+
+if(f.device!==d){
+document.getElementById("msg").innerText="KEY ĐÃ KHÓA THIẾT BỊ KHÁC";
+return;
+}
+
+/* OPEN PANEL */
+document.getElementById("login").classList.add("hidden");
+document.getElementById("main").classList.remove("hidden");
+
+startTimer(f.exp);
+
+}
+
+/* TIMER */
+function startTimer(exp){
+
+setInterval(()=>{
+
+let left=exp-Date.now();
+
+if(left<=0){
+document.getElementById("time").innerText="KEY HẾT HẠN";
+return;
+}
+
+let h=Math.floor(left/3600000);
+let m=Math.floor((left%3600000)/60000);
+let s=Math.floor((left%60000)/1000);
+
+document.getElementById("time").innerText=
+"⏳ THỜI GIAN CÒN LẠI: "+h+"H "+m+"M "+s+"S";
+
+},1000);
+
+}
+
+/* LOGOUT */
+function logout(){
+location.reload();
+}
+
+</script>
+
+</body>
+</html>
